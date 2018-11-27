@@ -50,7 +50,7 @@
     "build": "npm run build:es5 && npm run build:examples && npm run build:dist",
     "build:examples": "webpack --config webpack.example.config.js --sort-modules-by size --define process.env.NODE_ENV=production",
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production",
-    "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src/log.js && jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && node doctransfer.js",
+    "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src/log.js && jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && hypatia.exe jsondoc-ast.json ./doc/API-generated.ipynb && rm jsondoc-ast.json",
     "build:es5": "babel src --out-dir ./lib/es5/ --presets babel-preset-env --plugins babel-plugin-transform-runtime",
     "lint": "eslint \"benchmarks/**/*.js\" \"examples/**/*.js\" \"src/**/*.js\" \"test/**/*.js\""
   }
