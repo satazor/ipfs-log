@@ -2,6 +2,9 @@ module.exports = {
   timeout: 30000,
   testKeysPath: './test/fixtures/keys',
   defaultIpfsConfig: {
+    preload: {
+      enabled: false
+    },
     repo: './ipfs/ipfs-log/tests/daemon',
     start: true,
     EXPERIMENTAL: {

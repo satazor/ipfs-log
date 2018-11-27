@@ -13,7 +13,7 @@
     "node": ">=8.0.0"
   },
   "dependencies": {
-    "orbit-db-identity-provider": "^0.0.2",
+    "orbit-db-identity-provider": "^0.0.3",
     "p-map": "^1.1.1",
     "p-whilst": "^1.0.0"
   },
@@ -24,7 +24,7 @@
     "babel-loader": "^8.0.2",
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
-    "datastore-level": "^0.9.0",
+    "datastore-level": "~0.8.0",
     "eslint": "^5.4.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.14.0",
@@ -33,9 +33,11 @@
     "eslint-plugin-standard": "^4.0.0",
     "go-ipfs-dep": "~0.4.17",
     "hypatia": "^0.1.2",
-    "ipfs": "~0.33.0",
-    "ipfs-repo": "^0.24.0",
+    "ipfs": "~0.31.4",
+    "ipfs-repo": "~0.23.1",
+    "mocha-headless-chrome": "~2.0.1",
     "ipfsd-ctl": "~0.39.1",
+    "is-node": "^1.0.2",
     "istanbul": "^0.4.5",
     "jsdoc": "^3.5.5",
     "mocha": "^5.2.0",
@@ -47,7 +49,9 @@
   "scripts": {
     "test": "TEST=all mocha",
     "test:coverage": "istanbul cover -x src/g-set.js _mocha",
+    "test:browser": "npm run build:tests && mocha-headless-chrome -f ./test/browser/index.html",
     "build": "npm run build:es5 && npm run build:examples && npm run build:dist",
+    "build:tests": "webpack --config webpack.tests.config.js",
     "build:examples": "webpack --config webpack.example.config.js --sort-modules-by size --define process.env.NODE_ENV=production",
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production",
     "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src/log.js && jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && hypatia.exe jsondoc-ast.json ./doc/API-generated.ipynb && rm jsondoc-ast.json",

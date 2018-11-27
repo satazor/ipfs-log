@@ -5,7 +5,8 @@ deps:
 
 test: deps
 	npm run test
-
+	npm run test:browser
+	
 build: test
 	npm run build
 	@echo "Build success!"

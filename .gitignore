@@ -8,3 +8,5 @@ test/keystore/
 test-keys/
 .ipynb_checkpoints
 doc/test
+test/browser/bundle.js
+test/browser/bundle.js.map
