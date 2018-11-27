@@ -7,3 +7,4 @@ examples/browser/bundle.js
 test/keystore/
 test-keys/
 .ipynb_checkpoints
+doc/test
