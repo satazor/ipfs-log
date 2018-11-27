@@ -21,19 +21,41 @@ const uniqueEntriesReducer = (res, acc) => {
   return res
 }
 
-/**
- * Log
- *
- * @description
- * Log implements a G-Set CRDT and adds ordering
- *
- * From:
- * "A comprehensive study of Convergent and Commutative Replicated Data Types"
- * https://hal.inria.fr/inria-00555588
- */
 class Log extends GSet {
   /**
+   * @description
+   * Log implements a G-Set CRDT and adds ordering
    * Create a new Log instance
+   *
+   * From:
+   * "A comprehensive study of Convergent and Commutative Replicated Data Types"
+   * https://hal.inria.fr/inria-00555588
+   *
+   * @constructor
+   *
+   * @example
+   * const IPFS = require("ipfs")
+   * const Log = require("../src/log")
+   * const { AccessController, IdentityProvider } = require("../src/log")
+   * const Keystore = require('orbit-db-keystore')
+   * const Entry = require("../src/entry")
+   * const Clock = require('../src/lamport-clock')
+   *
+   * const accessController = new AccessController()
+   * const ipfs = new IPFS();
+   * const keystore = Keystore.create("../test/fixtures/keys")
+   * const identitySignerFn = async (id, data) => {
+   *   const key = await keystore.getKey(id)
+   *   return keystore.sign(key, data)
+   * }
+   *
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   // console.log(Object.keys(log))
+   * })()
+   *
    * @param  {IPFS}           [ipfs]          An IPFS instance
    * @param  {Object}         [access]        AccessController (./default-access-controller)
    * @param  {Object}         [identity]      Identity (https://github.com/orbitdb/orbit-db-identity-provider/blob/master/src/identity.js)
@@ -100,7 +122,18 @@ class Log extends GSet {
 
   /**
    * Returns the ID of the log
-   * @returns {string}
+   *
+   * @returns {string} the ID of the log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *   console.log(log.id) // default uses JS microtime
+   *
+   *   var log2 = new Log(ipfs, accessController, identity, "MyLogID")
+   *   console.log(log2.id) // or you can specify your own
+   * })()
    */
   get id () {
     return this._id
@@ -108,7 +141,15 @@ class Log extends GSet {
 
   /**
    * Returns the clock of the log
-   * @returns {string}
+   *
+   * @returns {string} The log's LamportClock
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *   console.log(log.clock)
+   * })()
    */
   get clock () {
     return this._clock
@@ -116,7 +157,19 @@ class Log extends GSet {
 
   /**
    * Returns the length of the log
-   * @return {Number} Length
+   * @return {Number} length of the log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *   console.log(log.length)
+   *
+   *   var entry = await Entry.create(ipfs, identity, '1', 'entry1', [], new Clock('1', 0))
+   *   await log.append(entry)
+   *   console.log(log.length)
+   * })()
+   *
    */
   get length () {
     return this._length
@@ -124,7 +177,17 @@ class Log extends GSet {
 
   /**
    * Returns the values in the log
-   * @returns {Array<Entry>}
+   * @returns {Array<Entry>} all values of the log sorted by LastWriteWins
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   var entry = await Entry.create(ipfs, identity, '1', 'entry1', [], new Clock('1', 0))
+   *   await log.append(entry)
+   *   console.log(log.values)
+   * })()
    */
   get values () {
     // Sort entries as "Last-Write-Wins", ie. by their clock time
@@ -133,7 +196,7 @@ class Log extends GSet {
 
   /**
    * Returns an array of heads as multihashes
-   * @returns {Array<string>}
+   * @returns {Array<string>} values of the log head(s)
    */
   get heads () {
     return Object.values(this._headsIndex) || []
@@ -142,7 +205,7 @@ class Log extends GSet {
   /**
    * Returns an array of Entry objects that reference entries which
    * are not in the log currently
-   * @returns {Array<Entry>}
+   * @returns {Array<Entry>} values of the log tail(s)s
    */
   get tails () {
     return Log.findTails(this.values)
@@ -160,16 +223,29 @@ class Log extends GSet {
   /**
    * Find an entry
    * @param {string} [hash] The Multihash of the entry as Base58 encoded string
-   * @returns {Entry|undefined}
+   * @returns {Entry|undefined} hash of the entry index
    */
   get (hash) {
     return this._entryIndex[hash]
   }
 
+  /**
+   * Verify that the log contains the entry you're seeking
+   * @param {Entry} entry the entry you're looking to verify
+   * @returns {Boolean} `true` or `false` if the log contains the entry
+   */
   has (entry) {
     return this._entryIndex[entry.hash || entry] !== undefined
   }
 
+  /**
+   * Follow the pointers and load the log into memory for processing
+   *
+   * @param {Array} rootEntries entry or entries to start from
+   * @param {Number} amount number of entries to traverse
+   *
+   * @returns {Object} object containing traversed entries
+   */
   traverse (rootEntries, amount) {
     // console.log("traverse>", rootEntry)
     let stack = rootEntries.map(getNextPointers).reduce(flatMap, [])
@@ -207,7 +283,8 @@ class Log extends GSet {
 
   /**
    * Append an entry to the log
-   * @param  {Entry} entry Entry to add
+   * @param  {Entry} data Entry to add
+   * @param {Number} pointerCount "Depth" of log to traverse
    * @return {Log}   New Log containing the appended value
    */
   async append (data, pointerCount = 1) {
@@ -248,15 +325,13 @@ class Log extends GSet {
    *
    * @description Joins two logs returning a new log. Doesn't mutate the original logs.
    *
-   * @param {IPFS}   [ipfs] An IPFS instance
    * @param {Log}    log    Log to join with this Log
-   * @param {Number} [size] Max size of the joined log
-   * @param {string} [id]   ID to use for the new log
+   * @param {Number} size Max size of the joined log
    *
    * @example
    * await log1.join(log2)
    *
-   * @returns {Promise<Log>}
+   * @returns {Promise<Log>} The promise of a new Log
    */
   async join (log, size = -1) {
     if (!isDefined(log)) throw LogError.LogNotDefinedError()
@@ -321,7 +396,7 @@ class Log extends GSet {
 
   /**
    * Get the log in JSON format
-   * @returns {Object<{heads}>}
+   * @returns {Object<{id, heads}>} object with the id of the log and the heads
    */
   toJSON () {
     return {
@@ -330,6 +405,10 @@ class Log extends GSet {
     }
   }
 
+  /**
+   * Get a snapshot of the log
+   * @returns {Object<{id, heads, values}>} object with id, heads, and values array
+   */
   toSnapshot () {
     return {
       id: this.id,
@@ -337,9 +416,10 @@ class Log extends GSet {
       values: this.values
     }
   }
+
   /**
    * Get the log as a Buffer
-   * @returns {Buffer}
+   * @returns {Buffer} Buffer version of stringified log JSON
    */
   toBuffer () {
     return Buffer.from(JSON.stringify(this.toJSON()))
@@ -351,7 +431,10 @@ class Log extends GSet {
    * two
    * └─one
    *   └─three
-   * @returns {string}
+   *
+   * @param {Function} payloadMapper transformation function
+   *
+   * @returns {string} plain text representation of the log
    */
   toString (payloadMapper) {
     return this.values
@@ -371,7 +454,7 @@ class Log extends GSet {
   /**
    * Check whether an object is a Log instance
    * @param {Object} log An object to check
-   * @returns {true|false}
+   * @returns {true|false} true or false if the object is a log instance
    */
   static isLog (log) {
     return log.id !== undefined &&
@@ -388,12 +471,25 @@ class Log extends GSet {
   }
 
   /**
+   * On Progress Callback
+   *
+   * @callback onProgressCallback
+   * @param {String} hash
+   * @param {Entry} entry
+   * @param {Number} depth
+   */
+
+  /**
    * Create a log from multihash
+   *
    * @param {IPFS}   ipfs        An IPFS instance
+   * @param {AccessController} access AccessController object for the Log
+   * @param {Identity} identity The identity of the owner of the log
    * @param {string} hash        Multihash (as a Base58 encoded string) to create the log from
-   * @param {Number} [length=-1] How many items to include in the log
-   * @param {Function(hash, entry, parent, depth)} onProgressCallback
-   * @return {Promise<Log>}      New Log
+   * @param {Number} length [length=-1] How many items to include in the log
+   * @param {Entry} exclude Entries to ex;lude from the log
+   * @param {onProgressCallback} onProgressCallback On Progress Callback
+   * @return {Promise<Log>} New Log
    */
   static async fromMultihash (ipfs, access, identity, hash, length = -1, exclude, onProgressCallback) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
@@ -405,11 +501,25 @@ class Log extends GSet {
   }
 
   /**
+   * On Progress Callback
+   *
+   * @callback onProgressCallbackWithParent
+   * @param {String} hash
+   * @param {Entry} entry
+   * @param {Entry} parent
+   * @param {Number} depth
+   */
+
+  /**
    * Create a log from a single entry's multihash
    * @param {IPFS}   ipfs        An IPFS instance
+   * @param {AccessController} access AccessController instance for the log
+   * @param {Identity} identity Identity object for the hash
    * @param {string} hash        Multihash (as a Base58 encoded string) of the Entry from which to create the log from
+   * @param {Number} id   the ID of the new log
    * @param {Number} [length=-1] How many entries to include in the log
-   * @param {Function(hash, entry, parent, depth)} onProgressCallback
+   * @param {Array<Entry>} exclude entries to exclude from the new log
+   * @param {onProgressCallback} onProgressCallback On Progress Callback
    * @return {Promise<Log>}      New Log
    */
   static async fromEntryHash (ipfs, access, identity, hash, id, length = -1, exclude, onProgressCallback) {
@@ -424,9 +534,12 @@ class Log extends GSet {
   /**
    * Create a log from a Log Snapshot JSON
    * @param {IPFS} ipfs          An IPFS instance
+   * @param {AccessController} access AccessController instance for the log
+   * @param {Identity} identity Identity object for the hash
    * @param {Object} json        Log snapshot as JSON object
    * @param {Number} [length=-1] How many entries to include in the log
-   * @param {Function(hash, entry, parent, depth)} [onProgressCallback]
+   * @param {Number} timeout number of milliseconds to time out in
+   * @param {onProgressCallback} onProgressCallback On progress callback
    * @return {Promise<Log>}      New Log
    */
   static async fromJSON (ipfs, access, identity, json, length = -1, timeout, onProgressCallback) {
@@ -440,10 +553,12 @@ class Log extends GSet {
   /**
    * Create a new log from an Entry instance
    * @param {IPFS}                ipfs          An IPFS instance
-   * @param {Entry|Array<Entry>}  sourceEntries An Entry or an array of entries to fetch a log from
+   * @param {AccessController} access AccessController instance for the log
+   * @param {Identity} identity Identity object for the hash
+   * @param {Entry|Array<Entry>} sourceEntries An Entry or an array of entries to fetch a log from
    * @param {Number}              [length=-1]   How many entries to include. Default: infinite.
    * @param {Array<Entry|string>} [exclude]     Array of entries or hashes or entries to not fetch (foe eg. cached entries)
-   * @param {Function(hash, entry, parent, depth)} [onProgressCallback]
+   * @param {onProgressCallback} onProgressCallback On progress callback
    * @return {Promise<Log>}       New Log
    */
   static async fromEntry (ipfs, access, identity, sourceEntries, length = -1, exclude, onProgressCallback) {
@@ -462,8 +577,8 @@ class Log extends GSet {
    * Finds entries that are the heads of this collection,
    * ie. entries that are not referenced by other entries
    *
-   * @param {Array<Entry>} Entries to search heads from
-   * @returns {Array<Entry>}
+   * @param {Array<Entry>} entries Entries to search heads from
+   * @returns {Array<Entry>} entryHash
    */
   static findHeads (entries) {
     var indexReducer = (res, entry, idx, arr) => {
@@ -480,8 +595,13 @@ class Log extends GSet {
     return entries.filter(exists).sort(compareIds)
   }
 
-  // Find entries that point to another entry that is not in the
-  // input array
+  /**
+   * Find entries that point to another entry that is not in the input array
+   *
+   * @param {Array<Entry>} entries entried to find tails from
+   *
+   * @returns {Array<Entry>} unique tail entries
+   */
   static findTails (entries) {
     // Reverse index { next -> entry }
     var reverseIndex = {}
@@ -527,8 +647,14 @@ class Log extends GSet {
     return findUniques(tails, 'hash').sort(Entry.compare)
   }
 
-  // Find the hashes to entries that are not in a collection
-  // but referenced by other entries
+  /**
+   * Find the hashes to entries that are not in a collection
+   * but referenced by other entries
+   *
+   * @param {Array<Entry>} entries array of entries to find tails in
+   *
+   * @returns {Array<String>} hashes of tail entries
+   */
   static findTailHashes (entries) {
     var hashes = {}
     var addToIndex = e => (hashes[e.hash] = true)
@@ -547,6 +673,14 @@ class Log extends GSet {
     return entries.reduce(reduceTailHashes, [])
   }
 
+  /**
+   * Shows the difference between two logs
+   *
+   * @param {Log} a the first log
+   * @param {Log} b the second log
+   *
+   * @returns {Log} The resultant log
+   */
   static difference (a, b) {
     let stack = Object.keys(a._headsIndex)
     let traversed = {}
