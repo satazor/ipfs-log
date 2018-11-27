@@ -32,10 +32,12 @@
     "eslint-plugin-promise": "^4.0.0",
     "eslint-plugin-standard": "^4.0.0",
     "go-ipfs-dep": "~0.4.17",
+    "hypatia": "^0.1.2",
     "ipfs": "~0.33.0",
     "ipfs-repo": "^0.24.0",
     "ipfsd-ctl": "~0.39.1",
     "istanbul": "^0.4.5",
+    "jsdoc": "^3.5.5",
     "mocha": "^5.2.0",
     "orbit-db-keystore": "github:orbitdb/orbit-db-keystore#fix/verification",
     "rimraf": "^2.6.1",
@@ -48,7 +50,7 @@
     "build": "npm run build:es5 && npm run build:examples && npm run build:dist",
     "build:examples": "webpack --config webpack.example.config.js --sort-modules-by size --define process.env.NODE_ENV=production",
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production",
-    "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src",
+    "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src/log.js && jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && node doctransfer.js",
     "build:es5": "babel src --out-dir ./lib/es5/ --presets babel-preset-env --plugins babel-plugin-transform-runtime",
     "lint": "eslint \"benchmarks/**/*.js\" \"examples/**/*.js\" \"src/**/*.js\" \"test/**/*.js\""
   }
