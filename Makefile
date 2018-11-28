@@ -13,6 +13,7 @@ build: test
 	@echo "Built: 'dist/', 'examples/browser/'"
 
 clean:
+	rm package-lock.json
 	rm -rf ipfs/
 	rm -rf ipfs-log-benchmarks/
 	rm -rf node_modules/
