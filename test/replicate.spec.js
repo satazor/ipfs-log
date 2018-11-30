@@ -114,7 +114,6 @@ Object.keys(testAPIs).forEach((IPFS) => {
 
       it('replicates logs', async () => {
         await waitForPeers(ipfs1, [id2], channel)
-        console.log("peers");
 
         for (let i = 1; i <= amount; i++) {
           await input1.append('A' + i)
