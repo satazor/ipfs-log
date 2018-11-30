@@ -34,7 +34,7 @@
     "go-ipfs-dep": "~0.4.17",
     "hypatia": "^0.1.2",
     "ipfs": "~0.33.1",
-    "ipfs-repo": "~0.25.1",
+    "ipfs-repo": "~0.24.0",
     "mocha-headless-chrome": "~2.0.1",
     "ipfsd-ctl": "~0.39.1",
     "is-node": "^1.0.2",
