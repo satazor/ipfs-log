@@ -104,6 +104,7 @@ Object.keys(testAPIs).forEach((IPFS) => {
         err = e.toString()
         throw e
       }
+
       assert.strictEqual(err, undefined)
       assert.strictEqual(log1.id, 'A')
       assert.strictEqual(log1.values.length, 1)

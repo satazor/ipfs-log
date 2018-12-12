@@ -102,8 +102,8 @@ Object.keys(testAPIs).forEach((IPFS) => {
 
         const heads = log1.heads
         assert.strictEqual(heads.length, 2)
-        assert.strictEqual(heads[0].hash, expectedHead1.hash)
-        assert.strictEqual(heads[1].hash, expectedHead2.hash)
+        assert.strictEqual(heads[0].hash, expectedHead2.hash)
+        assert.strictEqual(heads[1].hash, expectedHead1.hash)
       })
 
       it('finds two heads after two joins', async () => {

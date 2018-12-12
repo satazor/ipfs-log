@@ -531,8 +531,6 @@ Object.keys(testAPIs).forEach((IPFS) => {
           'entryA5', 'entryB5', 'entryC0', 'entryA9', 'entryA10'
         ]
 
-        // console.log(log.values.map(e => e.payload))
-        // console.log(res.values.map(e => e.payload))
         assert.deepStrictEqual(res.values.map(e => e.payload), first5)
 
         // First 11
