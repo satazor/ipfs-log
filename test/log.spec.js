@@ -362,7 +362,7 @@ Object.keys(testAPIs).forEach((IPFS) => {
           assert.strictEqual(res.values[3].clock.time, 4)
         })
 
-        it.skip('creates a log from ipfs hash that has three heads', async () => {
+        it('creates a log from ipfs hash that has three heads', async () => {
           let log1 = new Log(ipfs, testACL, testIdentity, 'A')
           let log2 = new Log(ipfs, testACL, testIdentity2, 'A')
           let log3 = new Log(ipfs, testACL, testIdentity3, 'A')

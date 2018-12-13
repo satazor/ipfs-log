@@ -20,4 +20,9 @@ clean:
 	rm -rf coverage/
 	rm -rf test/keystore/
 
+clean-dependencies: clean
+	if [ -a package-lock.json ]; then rm package-lock.json; fi;
+
+rebuild: | clean-dependencies build
+	
 .PHONY: test

@@ -6,8 +6,8 @@ const path = require('path')
 const uglifyOptions = {
   uglifyOptions: {
     mangle: false,
-    compress: false,
-  },
+    compress: false
+  }
 }
 
 module.exports = {
@@ -23,16 +23,16 @@ module.exports = {
     Buffer: true
   },
   plugins: [
-    new Uglify(uglifyOptions),
+    new Uglify(uglifyOptions)
   ],
   externals: {
-    fs: '{}',
+    fs: '{}'
   },
   resolve: {
     modules: [
       'node_modules',
       path.resolve(__dirname, '../node_modules')
-    ],
+    ]
   },
   resolveLoader: {
     modules: [

@@ -25,12 +25,6 @@
     "babel-plugin-transform-runtime": "^6.23.0",
     "babel-preset-env": "^1.6.1",
     "datastore-level": "~0.8.0",
-    "eslint": "^5.4.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.14.0",
-    "eslint-plugin-node": "^7.0.1",
-    "eslint-plugin-promise": "^4.0.0",
-    "eslint-plugin-standard": "^4.0.0",
     "go-ipfs-dep": "~0.4.17",
     "hypatia": "^0.1.2",
     "ipfs": "~0.33.1",
@@ -43,8 +37,13 @@
     "mocha": "^5.2.0",
     "orbit-db-keystore": "github:orbitdb/orbit-db-keystore#fix/verification",
     "rimraf": "^2.6.1",
+    "standard": "^12.0.1",
     "uglifyjs-webpack-plugin": "~1.3.0",
     "webpack": "^3.10.0"
+  },
+  "standard": {
+    "env": "mocha",
+    "ignore": "lib/es5/**/*.js"
   },
   "scripts": {
     "test": "TEST=all mocha",
@@ -56,6 +55,6 @@
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production",
     "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src/log.js && jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && hypatia.exe jsondoc-ast.json ./doc/API-generated.ipynb && rm jsondoc-ast.json",
     "build:es5": "babel src --out-dir ./lib/es5/ --presets babel-preset-env --plugins babel-plugin-transform-runtime",
-    "lint": "eslint \"benchmarks/**/*.js\" \"examples/**/*.js\" \"src/**/*.js\" \"test/**/*.js\""
+    "lint": "standard"
   }
 }

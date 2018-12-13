@@ -1,20 +1,12 @@
 'use strict'
 
-const glob = require('glob');
+const glob = require('glob')
 const webpack = require('webpack')
-const Uglify = require('uglifyjs-webpack-plugin')
 const path = require('path')
-
-const uglifyOptions = {
-  uglifyOptions: {
-    mangle: false,
-    compress: false,
-  },
-}
 
 module.exports = {
   // TODO: put all tests in a .js file that webpack can use as entry point
-  entry: glob.sync('./test/*.spec.js', { "ignore": ['./test/replicate.spec.js'] }),
+  entry: glob.sync('./test/*.spec.js', { 'ignore': ['./test/replicate.spec.js'] }),
   output: {
     filename: './test/browser/bundle.js'
   },
@@ -30,13 +22,12 @@ module.exports = {
       'process.env': {
         'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
       }
-    }),
-    // new Uglify(uglifyOptions),
+    })
   ],
   externals: {
     fs: '{}',
     rimraf: '{ sync: () => {} }',
-    "idb-readable-stream": "{}"
+    'idb-readable-stream': '{}'
   },
   resolve: {
     modules: [

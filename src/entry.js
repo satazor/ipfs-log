@@ -188,7 +188,7 @@ class Entry {
    * Returns entry's children as an Array up to the last know child.
    *
    * @param {Entry} [entry] Entry for which to find the parents
-   * @param {Array<Entry>} [vaules] Entries to search parents from
+   * @param {Array<Entry>} [values] Entries to search parents from
    * @returns {Array<Entry>}
    */
   static findChildren (entry, values) {
