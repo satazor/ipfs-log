@@ -186,7 +186,7 @@ class Log extends GSet {
    *
    *   var entry = await Entry.create(ipfs, identity, '1', 'entry1', [], new Clock('1', 0))
    *   await log.append(entry)
-   *   console.log(log.values)
+   *   console.log(log.values.map(e => e.payload.payload)
    * })()
    */
   get values () {
@@ -196,24 +196,61 @@ class Log extends GSet {
   /**
    * Returns an array of heads as multihashes
    * @returns {Array<string>} values of the log head(s)
+   *
+   * @example
+   * (async () => {
+   *   var identity1 = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var identity2 = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *
+   *   var log1 = new Log(ipfs, accessController, identity1)
+   *   var log2 = new Log(ipfs, accessController, identity2)
+   *
+   *   await log1.append("entryA1")
+   *   await log1.append("entryA2")
+   *   await log1.append("entryA3")
+   *
+   *   await log2.append("entryB1")
+   *   await log2.append("entryB2")
+   *
+   *   await log1.join(log2)
+   *
+   *   console.log(log1.heads.map(e => e.payload))
+   * })()
    */
   get heads () {
     return Object.values(this._headsIndex).sort(LastWriteWins).reverse() || []
   }
 
   /**
+   * **Note: May be deprecated**
+   *
    * Returns an array of Entry objects that reference entries which
    * are not in the log currently
+   *
    * @returns {Array<Entry>} values of the log tail(s)s
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   get tails () {
     return Log.findTails(this.values)
   }
 
   /**
+   * **Note: May be deprecated**
+   *
    * Returns an array of multihashes that are referenced by entries which
    * are not in the log currently
    * @returns {Array<string>} Array of multihashes
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   get tailHashes () {
     return Log.findTailHashes(this.values)
@@ -223,6 +260,19 @@ class Log extends GSet {
    * Find an entry
    * @param {string} [hash] The Multihash of the entry as Base58 encoded string
    * @returns {Entry|undefined} hash of the entry index
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entry1")
+   *   await log.append("entry2")
+   *   await log.append("entry3")
+   *
+   *   var hash = Object.keys(log._entryIndex)[1]
+   *   console.log(log.get(hash).payload)
+   * })()
    */
   get (hash) {
     return this._entryIndex[hash]
@@ -230,8 +280,22 @@ class Log extends GSet {
 
   /**
    * Verify that the log contains the entry you're seeking
+   *
    * @param {Entry} entry the entry you're looking to verify
    * @returns {Boolean} `true` or `false` if the log contains the entry
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entry1")
+   *   await log.append("entry2")
+   *   await log.append("entry3")
+   *
+   *   var hash = Object.keys(log._entryIndex)[1]
+   *   console.log(`${hash} --> ${log.has(hash)}`)
+   * })()
    */
   has (entry) {
     return this._entryIndex[entry.hash || entry] !== undefined
@@ -244,6 +308,25 @@ class Log extends GSet {
    * @param {Number} amount number of entries to traverse
    *
    * @returns {Object} object containing traversed entries
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   var traverse1 = log.traverse(log.heads, 1)
+   *   console.log(Object.keys(traverse1).length)
+   *
+   *   var traverse2 = log.traverse(log.heads, 2)
+   *   console.log(Object.keys(traverse2).length)
+   *
+   *   var traverse3 = log.traverse(log.heads, 3)
+   *   console.log(Object.keys(traverse3).length)
+   * })()
    */
   traverse (rootEntries, amount = -1) {
     // Sort the given given root entries and use as the starting stack
@@ -305,6 +388,18 @@ class Log extends GSet {
    * @param  {Entry} data Entry to add
    * @param {Number} pointerCount "Depth" of log to traverse
    * @return {Log}   New Log containing the appended value
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entry1")
+   *   await log.append("entry2")
+   *   await log.append("entry3")
+   *
+   *   console.log(log.length)
+   *  })()
    */
   async append (data, pointerCount = 1) {
     // Update the clock (find the latest clock)
@@ -348,10 +443,27 @@ class Log extends GSet {
    * @param {Log}    log    Log to join with this Log
    * @param {Number} size Max size of the joined log
    *
-   * @example
-   * await log1.join(log2)
-   *
    * @returns {Promise<Log>} The promise of a new Log
+   *
+   * @example
+   * (async () => {
+   *   var identity1 = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var identity2 = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *
+   *   var log1 = new Log(ipfs, accessController, identity1)
+   *   var log2 = new Log(ipfs, accessController, identity2)
+   *
+   *   await log1.append("entryA1")
+   *   await log1.append("entryA2")
+   *   await log1.append("entryA3")
+   *
+   *   await log2.append("entryB1")
+   *   await log2.append("entryB2")
+   *
+   *   await log1.join(log2)
+   *
+   *   console.log(log1.length)
+   * })()
    */
   async join (log, size = -1) {
     if (!isDefined(log)) throw LogError.LogNotDefinedError()
@@ -420,6 +532,18 @@ class Log extends GSet {
   /**
    * Get the log in JSON format
    * @returns {Object<{id, heads}>} object with the id of the log and the heads
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   console.log(log.toJSON())
+   * })()
    */
   toJSON () {
     return {
@@ -434,6 +558,22 @@ class Log extends GSet {
   /**
    * Get a snapshot of the log
    * @returns {Object<{id, heads, values}>} object with id, heads, and values array
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   console.log(log.toSnapshot())
+   * })()
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   toSnapshot () {
     return {
@@ -446,6 +586,22 @@ class Log extends GSet {
   /**
    * Get the log as a Buffer
    * @returns {Buffer} Buffer version of stringified log JSON
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   console.log(log.toBuffer())
+   * })()
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   toBuffer () {
     return Buffer.from(JSON.stringify(this.toJSON()))
@@ -453,14 +609,22 @@ class Log extends GSet {
 
   /**
    * Returns the log entries as a formatted string
-   * @example
-   * two
-   * └─one
-   *   └─three
    *
    * @param {Function} payloadMapper transformation function
    *
    * @returns {string} plain text representation of the log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   console.log(log.toString())
+   * })()
    */
   toString (payloadMapper) {
     return this.values
@@ -481,6 +645,16 @@ class Log extends GSet {
    * Check whether an object is a Log instance
    * @param {Object} log An object to check
    * @returns {true|false} true or false if the object is a log instance
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *   var notALog = { "Not": "Log"}
+   *
+   *   console.log(Log.isLog(log))
+   *   console.log(Log.isLog(notALog))
+   * })()
    */
   static isLog (log) {
     return log.id !== undefined &&
@@ -491,6 +665,18 @@ class Log extends GSet {
   /**
    * Get the log's multihash
    * @returns {Promise<string>} Multihash of the Log as Base58 encoded string
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   console.log(await log.toMultihash())
+   * })()
    */
   toMultihash () {
     return LogIO.toMultihash(this._storage, this)
@@ -516,6 +702,21 @@ class Log extends GSet {
    * @param {Entry} exclude Entries to ex;lude from the log
    * @param {onProgressCallback} onProgressCallback On Progress Callback
    * @return {Promise<Log>} New Log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   *
+   *   await log.append("entryA1")
+   *   await log.append("entryA2")
+   *   await log.append("entryA3")
+   *
+   *   var multihash = await log.toMultihash();
+   *   var logFromHash = await Log.fromMultihash(ipfs, accessController, identity, multihash)
+   *
+   *   console.log(logFromHash.values.map(e => e.payload))
+   * })()
    */
   static async fromMultihash (ipfs, access, identity, hash, length = -1, exclude, onProgressCallback) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
@@ -547,6 +748,12 @@ class Log extends GSet {
    * @param {Array<Entry>} exclude entries to exclude from the new log
    * @param {onProgressCallback} onProgressCallback On Progress Callback
    * @return {Promise<Log>}      New Log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static async fromEntryHash (ipfs, access, identity, hash, id, length = -1, exclude, onProgressCallback) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
@@ -567,6 +774,12 @@ class Log extends GSet {
    * @param {Number} timeout number of milliseconds to time out in
    * @param {onProgressCallback} onProgressCallback On progress callback
    * @return {Promise<Log>}      New Log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static async fromJSON (ipfs, access, identity, json, length = -1, timeout, onProgressCallback) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
@@ -586,6 +799,12 @@ class Log extends GSet {
    * @param {Array<Entry|string>} [exclude]     Array of entries or hashes or entries to not fetch (foe eg. cached entries)
    * @param {onProgressCallback} onProgressCallback On progress callback
    * @return {Promise<Log>}       New Log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static async fromEntry (ipfs, access, identity, sourceEntries, length = -1, exclude, onProgressCallback) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
@@ -605,6 +824,12 @@ class Log extends GSet {
    *
    * @param {Array<Entry>} entries Entries to search heads from
    * @returns {Array<Entry>} entryHash
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static findHeads (entries) {
     var indexReducer = (res, entry, idx, arr) => {
@@ -627,6 +852,12 @@ class Log extends GSet {
    * @param {Array<Entry>} entries entried to find tails from
    *
    * @returns {Array<Entry>} unique tail entries
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static findTails (entries) {
     // Reverse index { next -> entry }
@@ -680,6 +911,12 @@ class Log extends GSet {
    * @param {Array<Entry>} entries array of entries to find tails in
    *
    * @returns {Array<String>} hashes of tail entries
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static findTailHashes (entries) {
     var hashes = {}
@@ -706,6 +943,12 @@ class Log extends GSet {
    * @param {Log} b the second log
    *
    * @returns {Log} The resultant log
+   *
+   * @example
+   * (async () => {
+   *   var identity = await IdentityProvider.createIdentity(keystore, 'username', identitySignerFn)
+   *   var log = new Log(ipfs, accessController, identity)
+   * })()
    */
   static difference (a, b) {
     let stack = Object.keys(a._headsIndex)

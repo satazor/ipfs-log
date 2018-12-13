@@ -18,7 +18,6 @@
     "p-whilst": "^1.0.0"
   },
   "devDependencies": {
-    "@orbitdb/eslint-config-orbitdb": "0.0.2",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-loader": "^8.0.2",
@@ -53,7 +52,7 @@
     "build:tests": "webpack --config webpack.tests.config.js",
     "build:examples": "webpack --config webpack.example.config.js --sort-modules-by size --define process.env.NODE_ENV=production",
     "build:dist": "webpack --config webpack.config.js --display-modules --sort-modules-by size --define process.env.NODE_ENV=production",
-    "build:docs": "eslint --rule 'valid-jsdoc: 2' ./src/log.js && jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && hypatia.exe jsondoc-ast.json ./doc/API-generated.ipynb && rm jsondoc-ast.json",
+    "build:docs": "jsdoc --package ./package.json -X ./src/log.js > jsondoc-ast.json && hypatia.exe jsondoc-ast.json ./doc/API-generated.ipynb && rm jsondoc-ast.json",
     "build:es5": "babel src --out-dir ./lib/es5/ --presets babel-preset-env --plugins babel-plugin-transform-runtime",
     "lint": "standard"
   }
