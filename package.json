@@ -26,7 +26,7 @@
     "babel-preset-env": "^1.6.1",
     "datastore-level": "~0.8.0",
     "go-ipfs-dep": "~0.4.17",
-    "ipfs": "~0.31.4",
+    "ipfs": "~0.33.1",
     "ipfs-repo": "~0.23.1",
     "ipfsd-ctl": "~0.39.1",
     "is-node": "^1.0.2",
