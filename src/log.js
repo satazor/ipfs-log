@@ -441,12 +441,13 @@ class Log extends GSet {
    * @param {number} [length=-1] How many items to include in the log
    * @param {Array<Entry>} [exclude] Entries to not fetch (cached)
    * @param {function(cid, entry, parent, depth)} onProgressCallback
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @returns {Promise<Log>}
    * @deprecated
    */
-  static async fromCID (ipfs, access, identity, cid, length = -1, exclude, onProgressCallback) {
+  static async fromCID (ipfs, access, identity, cid, length = -1, exclude, onProgressCallback, timeout) {
     // TODO: need to verify the entries with 'key'
-    const data = await LogIO.fromCID(ipfs, cid, length, exclude, onProgressCallback)
+    const data = await LogIO.fromCID(ipfs, cid, length, exclude, onProgressCallback, timeout)
     return new Log(ipfs, access, identity, data.id, data.values, data.heads, data.clock)
   }
 
@@ -459,11 +460,12 @@ class Log extends GSet {
     * @param {number} [length=-1] How many items to include in the log
     * @param {Array<Entry>} [exclude] Entries to not fetch (cached)
     * @param {function(cid, entry, parent, depth)} onProgressCallback
+    * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
     * @returns {Promise<Log>}
     * @deprecated
     */
-  static async fromMultihash (ipfs, access, identity, multihash, length = -1, exclude, onProgressCallback) {
-    return Log.fromCID(ipfs, access, identity, multihash, length, exclude, onProgressCallback)
+  static async fromMultihash (ipfs, access, identity, multihash, length = -1, exclude, onProgressCallback, timeout) {
+    return Log.fromCID(ipfs, access, identity, multihash, length, exclude, onProgressCallback, timeout)
   }
 
   /**
@@ -475,11 +477,12 @@ class Log extends GSet {
    * @param {string} [logId] The ID of the log
    * @param {number} [length=-1] How many entries to include in the log
    * @param {function(cid, entry, parent, depth)} onProgressCallback
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @return {Promise<Log>} New Log
    */
-  static async fromEntryCid (ipfs, access, identity, cid, logId, length = -1, exclude, onProgressCallback) {
+  static async fromEntryCid (ipfs, access, identity, cid, logId, length = -1, exclude, onProgressCallback, timeout) {
     // TODO: need to verify the entries with 'key'
-    const data = await LogIO.fromEntryCid(ipfs, cid, length, exclude, onProgressCallback)
+    const data = await LogIO.fromEntryCid(ipfs, cid, length, exclude, onProgressCallback, timeout)
     return new Log(ipfs, access, identity, logId, data.values)
   }
 
@@ -492,11 +495,12 @@ class Log extends GSet {
    * @param {string} [logId] The ID of the log
    * @param {number} [length=-1] How many entries to include in the log
    * @param {function(cid, entry, parent, depth)} onProgressCallback
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @return {Promise<Log>} New Log
    * @deprecated
    */
-  static async fromEntryHash (ipfs, access, identity, multihash, logId, length = -1, exclude, onProgressCallback) {
-    return Log.fromEntryCid(ipfs, access, identity, multihash, logId, length, exclude, onProgressCallback)
+  static async fromEntryHash (ipfs, access, identity, multihash, logId, length = -1, exclude, onProgressCallback, timeout) {
+    return Log.fromEntryCid(ipfs, access, identity, multihash, logId, length, exclude, onProgressCallback, timeout)
   }
 
   /**
@@ -506,6 +510,7 @@ class Log extends GSet {
    * @param {Identity} identity The identity instance
    * @param {Object} json Log snapshot as JSON object
    * @param {number} [length=-1] How many entries to include in the log
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @param {function(cid, entry, parent, depth)} [onProgressCallback]
    * @return {Promise<Log>} New Log
    */
@@ -522,11 +527,12 @@ class Log extends GSet {
    * @param {number} [length=-1] How many entries to include. Default: infinite.
    * @param {Array<Entry>} [exclude] Entries to not fetch (cached)
    * @param {function(cid, entry, parent, depth)} [onProgressCallback]
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @return {Promise<Log>} New Log
    */
-  static async fromEntry (ipfs, access, identity, sourceEntries, length = -1, exclude, onProgressCallback) {
+  static async fromEntry (ipfs, access, identity, sourceEntries, length = -1, exclude, onProgressCallback, timeout) {
     // TODO: need to verify the entries with 'key'
-    const data = await LogIO.fromEntry(ipfs, sourceEntries, length, exclude, onProgressCallback)
+    const data = await LogIO.fromEntry(ipfs, sourceEntries, length, exclude, onProgressCallback, timeout)
     return new Log(ipfs, access, identity, data.id, data.values)
   }
 

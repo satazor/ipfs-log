@@ -46,16 +46,17 @@ class LogIO {
    * @param {number} [length=-1] How many items to include in the log
    * @param {Array<Entry>} [exclude] Entries to not fetch (cached)
    * @param {function(cid, entry, parent, depth)} onProgressCallback
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @returns {Promise<Log>}
    */
-  static async fromCID (ipfs, cid, length = -1, exclude, onProgressCallback) {
+  static async fromCID (ipfs, cid, length = -1, exclude, onProgressCallback, timeout) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
     if (!isDefined(cid)) throw new Error(`Invalid CID: ${cid}`)
 
     const logData = await dagNode.read(ipfs, cid, IPLD_LINKS)
     if (!logData.heads || !logData.id) throw LogError.NotALogError()
 
-    const entries = await EntryIO.fetchAll(ipfs, logData.heads, length, exclude, null, onProgressCallback)
+    const entries = await EntryIO.fetchAll(ipfs, logData.heads, length, exclude, timeout, onProgressCallback)
 
     // Find latest clock
     const clock = entries.reduce((clock, entry) => {
@@ -89,7 +90,7 @@ class LogIO {
     return LogIO.fromCID(ipfs, multihash, length, exclude, onProgressCallback)
   }
 
-  static async fromEntryCid (ipfs, entryCid, length = -1, exclude, onProgressCallback) {
+  static async fromEntryCid (ipfs, entryCid, length = -1, exclude, onProgressCallback, timeout) {
     if (!isDefined(ipfs)) throw LogError.IpfsNotDefinedError()
     if (!isDefined(entryCid)) throw new Error("'entryCid' must be defined")
 
@@ -99,7 +100,7 @@ class LogIO {
     // Fetch given length, return size at least the given input entries
     length = length > -1 ? Math.max(length, 1) : length
 
-    const entries = await EntryIO.fetchParallel(ipfs, entryCids, length, exclude, null, null, onProgressCallback)
+    const entries = await EntryIO.fetchParallel(ipfs, entryCids, length, exclude, null, timeout, onProgressCallback)
     // Cap the result at the right size by taking the last n entries,
     // or if given length is -1, then take all
     const sliced = length > -1 ? last(entries, length) : entries
@@ -128,9 +129,10 @@ class LogIO {
    * @param {number} [length=-1] How many entries to include
    * @param {Array<Entry>} [exclude] Entries to not fetch (cached)
    * @param {function(cid, entry, parent, depth)} [onProgressCallback]
+   * @param {number} [timeout] Maximum time to wait for each fetch operation, in ms
    * @returns {Promise<Log>}
    */
-  static async fromEntry (ipfs, sourceEntries, length = -1, exclude, onProgressCallback) {
+  static async fromEntry (ipfs, sourceEntries, length = -1, exclude, onProgressCallback, timeout) {
     if (!isDefined(ipfs)) throw LogError.IPFSNotDefinedError()
     if (!isDefined(sourceEntries)) throw new Error("'sourceEntries' must be defined")
 
@@ -151,7 +153,7 @@ class LogIO {
     const hashes = sourceEntries.map(e => e.cid)
 
     // Fetch the entries
-    const entries = await EntryIO.fetchParallel(ipfs, hashes, length, exclude, null, null, onProgressCallback)
+    const entries = await EntryIO.fetchParallel(ipfs, hashes, length, exclude, null, timeout, onProgressCallback)
 
     // Combine the fetches with the source entries and take only uniques
     const combined = sourceEntries.concat(entries)
